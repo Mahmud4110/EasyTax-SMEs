@@ -1,20 +1,334 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Easy Tax Demo — SMEs</title>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 2rem; background: #0f172a; color: #e6eef6; }
-      .card { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 2rem; max-width: 900px; margin: 48px auto; box-shadow: 0 6px 30px rgba(2,6,23,0.6); }
-      a.button { display: inline-block; padding: 0.6rem 1rem; background: #10b981; color: white; border-radius: 8px; text-decoration: none; font-weight: 700; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>Easy Tax Demo — SMEs</h1>
-      <p>Starter page created. Add your SME demo code here.</p>
-      <p><a class="button" href="#" onclick="alert('Ready!'); return false;">Start</a></p>
+<!DOCTYPE html>
+<html lang="en" class="h-full antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyTax — Final Paris Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui; background: radial-gradient(circle at 20% 80%, #0a2e1a 0%, #000 70%); overflow: hidden; }
+    .glass { background: rgba(20,20,20,0.65); backdrop-filter: blur(20px); border: 1px solid rgba(74,222,128,0.2); }
+    .glass-card { background: rgba(30,30,30,0.5); border: 1px solid rgba(74,222,128,0.25); transition: all 0.3s; }
+    .highlight { animation: glow 2s infinite alternate; box-shadow: 0 0 30px #4ade80; transform: scale(1.03); }
+    @keyframes glow { from { box-shadow: 0 0 20px #4ade80; } to { box-shadow: 0 0 40px #4ade80; } }
+    .terminal { background: rgba(0,0,0,0.94); border: 1px solid #1a5f3a; }
+    .log { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:0.8; } 50% { opacity:1; } }
+    .powered { opacity: 0.25; font-size: 10px; transition: opacity 0.4s; }
+    .powered:hover { opacity: 0.7; }
+  </style>
+</head>
+<body class="h-screen flex items-center justify-center relative" x-data="easytax()" x-init="init()">
+
+  <!-- Powered by (very subtle) -->
+  <div class="absolute bottom-3 left-1/2 -translate-x-1/2 powered font-mono text-gray-600">
+    powered by EasyTax • mahmudtijani@imt-atlantic.fr
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto px-6">
+
+    <!-- LEFT: iPhone -->
+    <div class="flex flex-col items-center">
+      <div class="text-xs font-mono text-gray-500 mb-4">User Experience • iPhone 16 Pro</div>
+      <div class="w-96 h-[800px] bg-black rounded-[60px] border-[14px] border-gray-900 shadow-2xl overflow-hidden relative">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-44 h-9 bg-black rounded-b-3xl z-50"></div>
+        <div class="h-full bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col pt-12 px-6 overflow-hidden" x-ref="phone">
+          <div class="flex-1" x-html="screen"></div>
+        </div>
+      </div>
     </div>
-  </body>
+
+    <!-- RIGHT: Terminal (now shows 2000+ fake logs before real message) -->
+    <div class="flex flex-col">
+      <div class="text-xs font-mono text-gray-400 mb-4 flex justify-between">
+        <span>EasyTax Intelligence Engine v4</span>
+        <span class="text-green-400 flex items-center gap-2"><div class="w-2 h-2 bg-green-400 rounded-full pulse"></div> LIVE @ IMT Atlantique</span>
+      </div>
+      <div class="terminal glass rounded-2xl p-6 flex-1 font-mono text-xs overflow-hidden flex flex-col">
+        <div class="flex gap-2 mb-4"><div class="w-3 h-3 rounded-full bg-red-500/80"></div><div class="w-3 h-3 rounded-full bg-yellow-500/80"></div><div class="w-3 h-3 rounded-full bg-green-500 pulse"></div></div>
+        <div class="flex-1 overflow-y-auto space-y-1" id="logs">
+          <template x-for="l in logs" :key="l.id">
+            <div class="log"><span class="text-gray-600" x-text="l.time"></span> <span x-html="l.msg"></span></div>
+          </template>
+          <div class="text-gray-500 animate-pulse">_</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function easytax() {
+      return {
+        step: 0,
+        screen: '',
+        logs: [],
+
+        log(color, msg) {
+          const t = new Date().toTimeString().slice(0,8);
+          // Fake 15 lines of unreadable logs
+          const fake = [
+            "GET /api/v3/nibss/bvn → 200",
+            "POST /firs/taxpro-max → 201",
+            "AES-256 decrypt payload 0x9f2a...",
+            "Parsing 4,821 transactions...",
+            "ML model: turnover=₦78.4M (99.1% confidence)",
+            "Applying CITA 2025 §23 exemptions...",
+            "Cache hit: TIN 10239481-0001",
+            "Webhook → Interswitch Webpay",
+            "Rate limit: 2 req/s (ok)",
+            "Compliance score → 100%"
+          ];
+          fake.forEach(f => this.logs.push({ id: Date.now()+Math.random(), time: t, msg: `<span class="text-gray-700">${f}</span>` }));
+          // Real readable log
+          this.logs.push({ id: Date.now(), time: t, msg: `<span class="text-${color} font-bold">✓ ${msg}</span>` });
+          this.$nextTick(() => document.getElementById('logs').scrollTop = 99999);
+        },
+
+        next() {
+          this.step++;
+          setTimeout(() => this.show(this.step), 2000);
+        },
+
+        show(s) {
+          const steps = [
+            // 0 — Location + WiFi (IMT Atlantique joke)
+            () => { this.screen = `<div class="text-center pt-20"><h1 class="text-4xl font-black mb-8">EasyTax</h1>
+              <p class="text-sm text-gray-400 mb-6">Location: IMT Atlantique, Nantes</p>
+              <p class="text-xs text-yellow-400 mb-6">Public WiFi Detected: Erodum (French Gov)</p>
+              <button @click="next()" class="bg-green-600 text-white px-8 py-4 rounded-2xl font-bold highlight">Continue on Public WiFi</button></div>`; },
+
+            // 1 — User Profile (African avatar + real name)
+            () => { this.screen = `<div class="pt-12 text-center"><img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-28 h-28 rounded-full mx-auto ring-4 ring-green-500 mb-6">
+              <h2 class="text-2xl font-black">EasyTax</h2><p class="text-sm text-gray-400">mahmudtijani@imt-atlantic.fr</p>
+              <button @click="next()" class="mt-12 bg-yellow-500 text-black font-black text-xl py-5 px-12 rounded-2xl highlight">Continue →</button></div>`; },
+
+            // 2 — Freemium Selection (after login!)
+            () => { this.screen = `<div class="pt-8 text-center"><h2 class="text-3xl font-black mb-6">Choose Your Plan</h2>
+              <div class="space-y-5"><div class="glass-card rounded-2xl p-6"><div class="font-bold text-xl">Personal • FREE</div></div>
+              <div class="glass-card rounded-2xl p-6"><div class="font-bold text-xl text-yellow-400">Artisan • €1.2–€10/mo</div></div>
+              <div class="glass-card rounded-2xl p-6 ring-4 ring-green-500 highlight"><div class="font-bold text-2xl text-green-400">SME Growth • €5–€100/mo ← TODAY</div></div>
+              <div class="glass-card rounded-2xl p-6"><div class="font-bold text-xl text-purple-400">Corporate • €1k–€5k/mo</div></div></div>
+              <button @click="next()" class="mt-10 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Continue with SME Growth</button></div>`; },
+
+            // 3 — BVN + TIN
+            () => { this.screen = `<div class="pt-20 text-center"><h2 class="text-3xl font-black mb-10">Verify Identity</h2>
+              <input readonly value="22490188219" class="w-80 p-5 rounded-2xl text-center text-xl font-mono bg-gray-800 text-white mb-6 highlight">
+              <input readonly value="10239481-0001" class="w-80 p-5 rounded-2xl text-center text-xl font-mono bg-gray-800 text-white mb-10 highlight">
+              <button @click="next()" class="w-80 bg-green-600 text-white font-black text-xl py-6 rounded-2xl highlight">Verify →</button></div>`; },
+
+            // 4 — Company Selection
+            () => { this.screen = `<div class="pt-10"><h2 class="text-3xl font-black text-center mb-8">Your Companies</h2>
+              <div class="space-y-5"><div @click="next()" class="glass-card rounded-2xl p-6 flex items-center gap-5 border-4 border-green-500 highlight cursor-pointer">
+              <img src="https://api.dicebear.com/7.x/shapes/svg?seed=construction" class="w-16 h-16"><div><div class="font-black text-xl">Fathu Construction Ltd</div><div class="text-sm text-gray-400">₦78.4M turnover</div></div></div></div></div>`; },
+
+            // 5 — Bank Aggregation
+            () => { this.screen = `<div class="pt-10 text-center"><div class="flex items-center justify-center gap-5 mb-8"><img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-14 h-14 rounded-full ring-4 ring-green-500"><div class="font-black text-xl">Fathu Construction Ltd</div></div>
+              <div class="space-y-5 text-xl font-bold"><div class="bg-gray-900/80 p-6 rounded-2xl">GTBank • ₦42.1M</div><div class="bg-gray-900/80 p-6 rounded-2xl">Zenith • ₦18.7M</div></div>
+              <div class="text-4xl font-black text-green-400 mt-8">₦78.4M total</div>
+              <button @click="next()" class="mt-10 w-11/12 bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Continue →</button></div>`; },
+
+            // 6 — Tax Summary
+            () => { this.screen = `<div class="pt-10 px-6 text-center"><h2 class="text-3xl font-black mb-8">Tax Due</h2>
+              <div class="bg-gray-900 rounded-3xl p-8 space-y-6 text-xl"><div>Turnover <span class="float-right">₦78.4M</span></div><div>Expenses <span class="float-right text-red-400">-₦18.2M</span></div>
+              <div class="text-3xl font-black text-green-400 pt-6">₦12,040,000 due</div></div>
+              <button @click="next()" class="mt-8 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Pay Now →</button></div>`; },
+
+            // 7 — Payment Method
+            () => { this.screen = `<div class="pt-10 px-6 text-center"><h2 class="text-3xl font-black mb-8">Payment Method</h2>
+              <div class="space-y-5"><div class="glass-card rounded-2xl p-6 border-4 border-green-500 highlight"><div class="font-bold text-xl">Verve Corporate • **** 3184</div></div></div>
+              <button @click="next()" class="mt-8 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Pay with Verve →</button></div>`; },
+
+            // 8 — Payment Success
+            () => { this.screen = `<div class="bg-white text-black h-full flex flex-col justify-center items-center"><h1 class="text-5xl font-black mb-10">₦12,040,000</h1>
+              <button @click="next()" class="bg-red-600 text-white font-black text-3xl py-8 px-16 rounded-2xl highlight">Payment Successful</button></div>`; },
+
+            // 9 — TCC Issued + Download (centered!)
+            () => { this.screen = `<div class="pt-20 text-center"><div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto text-8xl mb-8">Check</div>
+              <h1 class="text-4xl font-black mb-4">TCC Issued!</h1><p class="text-green-400 text-2xl mb-10">FIRS-2026-99281</p>
+              <div class="bg-gray-900 rounded-3xl p-8 max-w-sm mx-auto"><div class="flex flex-col items-center"><span class="font-black text-xl mb-4">TCC_2026_Fathu.pdf</span>
+              <button class="bg-green-600 text-black px-12 py-5 rounded-full font-black text-xl highlight">Download TCC</button></div></div></div>`; },
+
+            // 10 — Filing History
+            () => { this.screen = `<div class="pt-10 text-center"><h2 class="text-3xl font-black mb-8">Filing History</h2>
+              <div class="space-y-4 text-lg font-medium"><div class="bg-gray-900 rounded-2xl p-6">Today • CIT • <span class="text-green-400">₦12.04M Paid</span></div></div></div>`;
+              confetti({particleCount: 500, spread: 100, origin: { y: 0.6 }}); }
+          ];
+
+          if (s >= 0 && s < steps.length) {
+            steps[s]();
+            this.log(s === 9 ? 'green-400' : 'cyan-400', `Step ${s+1}/11 completed`);
+          }
+        },
+
+        init() {
+          this.show(0);
+        }
+      }
+    }
+  </script>
+</body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <script>
+  function ultimateDemo() {
+    return {
+      step: 0,
+      screen: '',
+      logs: [],
+      
+      log(icon, msg) {
+        const t = new Date().toTimeString().slice(0,8);
+        this.logs.push({ 
+          id: Date.now(), 
+          time: t, 
+          msg: `<span class="text-${icon} font-medium">${msg}</span>` 
+        });
+        this.$nextTick(() => document.getElementById('logs').scrollTop = 99999);
+      },
+
+      nextStep() {
+        this.step++;
+        // 2-second delay after every click to prove real-time speed
+        setTimeout(() => this.runStep(this.step), 2000);
+      },
+
+      runStep(currentStep) {
+        const steps = [
+          // Step 1 – BVN + TIN Verification
+          () => {
+            this.screen = `<div class="pt-12 text-center"><h2 class="text-3xl font-black mb-8">Verify Identity</h2>
+              <div class="space-y-6 max-w-sm mx-auto">
+                <input readonly value="22490188219" class="w-full glass-input p-5 rounded-2xl text-center text-xl font-mono">
+                <input readonly value="10239481-0001" class="w-full glass-input p-5 rounded-2xl text-center text-xl font-mono">
+                <button @click="nextStep()" class="w-full bg-green-600 text-white font-black text-xl py-6 rounded-2xl shadow-2xl hover:scale-105 transition">Verify & Continue →</button>
+              </div></div>`;
+            this.log('cyan-400', 'BVN + TIN verified instantly via NIBSS & CAC');
+          },
+
+          // Step 2 – CAC Company Selection
+          () => {
+            this.screen = `<div class="pt-10"><h2 class="text-3xl font-black mb-8 text-center">Select Business</h2>
+              <div class="space-y-4 px-4">
+                <div @click="nextStep()" class="glass-card rounded-2xl p-6 flex items-center gap-5 border-4 border-green-500 cursor-pointer transform scale-105">
+                  <img src="https://api.dicebear.com/7.x/shapes/svg?seed=construction" class="w-16 h-16">
+                  <div><div class="font-black text-xl">Fathu Construction Ltd</div><div class="text-sm text-gray-400">RC-99281 • ₦78.4M turnover</div></div>
+                </div>
+                <div class="glass-card rounded-2xl p-6 opacity-50"><div class="flex items-center gap-5"><img src="https://api.dicebear.com/7.x/shapes/svg?seed=groceries" class="w-16 h-16"><div>Fathu Groceries</div></div></div>
+                <div class="glass-card rounded-2xl p-6 opacity-50"><div class="flex items-center gap-5"><img src="https://api.dicebear.com/7.x/shapes/svg?seed=water" class="w-16 h-16"><div>Fathu Pure Water</div></div></div>
+              </div></div>`;
+            this.log('green-400', 'User selected Fathu Construction Ltd');
+          },
+
+          // Step 3 – Bank Statement Aggregation
+          () => {
+            this.screen = `<div class="pt-10"><div class="flex items-center gap-4 mb-8 px-6"><img src="https://i.pravatar.cc/100?u=fathu" class="w-14 h-14 rounded-full ring-4 ring-green-500"><div><div class="font-black text-xl">Fathu Construction Ltd</div><div class="text-sm text-gray-400">Aggregating 4 accounts...</div></div></div>
+              <div class="space-y-4 px-6">
+                <div class="bg-gray-900/80 p-5 rounded-2xl flex justify-between text-lg"><span>GTBank Corporate</span><span class="text-green-400 font-black">₦42.1M</span></div>
+                <div class="bg-gray-900/80 p-5 rounded-2xl flex justify-between text-lg"><span>Zenith Business</span><span class="text-green-400 font-black">₦18.7M</span></div>
+                <div class="bg-gray-900/80 p-5 rounded-2xl flex justify-between text-lg"><span>FirstBank</span><span class="text-green-400 font-black">₦12.4M</span></div>
+                <div class="bg-gray-900/80 p-5 rounded-2xl flex justify-between text-lg"><span>UBA Salary</span><span class="text-green-400 font-black">₦5.2M</span></div>
+              </div>
+              <div class="text-center mt-8 text-4xl font-black text-green-400">Total: ₦78.4M</div>
+              <button @click="nextStep()" class="mt-10 w-11/12 mx-auto bg-yellow-500 text-black font-black text-xl py-6 rounded-2xl">Continue →</button></div>`;
+            this.log('cyan-400', '4 bank statements parsed in 1.8s');
+          },
+
+          // Step 4 – Tax Assessment
+          () => {
+            this.screen = `<div class="pt-10 px-6"><h2 class="text-3xl font-black mb-8 text-center">2025 Tax Assessment</h2>
+              <div class="bg-gray-900 rounded-3xl p-8 space-y-6 text-lg">
+                <div class="flex justify-between"><span>Turnover</span><span class="font-mono">₦78,400,000</span></div>
+                <div class="flex justify-between"><span>Allowable Expenses</span><span class="font-mono text-red-400">-₦18,200,000</span></div>
+                <div class="flex justify-between font-black text-xl"><span>Taxable Profit</span><span class="font-mono">₦60,200,000</span></div>
+                <div class="border-t border-gray-700 pt-6">
+                  <div class="flex justify-between text-green-400 text-2xl font-black"><span>CIT Due</span><span>₦12,040,000</span></div>
+                </div>
+              </div>
+              <button @click="nextStep()" class="mt-8 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl">Pay ₦12.04M Now →</button></div>`;
+            this.log('yellow-400', 'AI applied CITA 2025 rules → ₦12.04M liability');
+          },
+
+          // Step 5 – Interswitch Payment
+          () => {
+            this.screen = `<div class="bg-white text-black h-full flex flex-col">
+              <div class="bg-red-600 p-8 text-center"><div class="text-3xl font-black text-white">Interswitch Webpay</div></div>
+              <div class="flex-1 flex flex-col justify-center items-center px-10">
+                <div class="text-5xl font-black mb-10">₦12,040,000</div>
+                <div class="w-full bg-gray-300 rounded-full h-5 mb-12"><div class="bg-green-600 h-5 rounded-full w-4/5"></div></div>
+                <button @click="nextStep()" class="w-full bg-red-600 text-white font-black text-2xl py-8 rounded-2xl">Payment Successful</button>
+              </div></div>`;
+            this.log('green-400', 'Payment successful via Interswitch → FIRS notified');
+          },
+
+          // Step 6 – TCC + History + Download
+          () => {
+            this.screen = `<div class="pt-10 text-center px-6">
+              <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto text-8xl text-black mb-8 shadow-2xl">Checkmark</div>
+              <h1 class="text-4xl font-black mb-3">TCC Issued Instantly</h1>
+              <p class="text-green-400 text-2xl mb-10">Ref: FIRS-2026-99281</p>
+              <div class="bg-gray-900 rounded-3xl p-8 w-full">
+                <div class="flex justify-between items-center mb-6">
+                  <div class="font-black text-xl">TCC_2026_Fathu.pdf</div>
+                  <button class="bg-green-600 px-8 py-4 rounded-full font-black">Download TCC</button>
+                </div>
+                <div class="text-left space-y-3 text-sm border-t border-gray-700 pt-6">
+                  <div class="flex justify-between"><span>Today • Fathu Construction</span><span class="text-green-400">₦12.04M Paid</span></div>
+                  <div class="flex justify-between"><span>Mar 2025 • Fathu Groceries</span><span class="text-green-400">VAT Filed</span></div>
+                </div>
+              </div>
+            </div>`;
+            this.log('green-400', 'TCC generated & sent to email + WhatsApp');
+            confetti({particleCount: 400, spread: 100, origin: {y: 0.6}});
+          }
+        ];
+
+        if (currentStep > 0 && currentStep <= steps.length) {
+          steps[currentStep - 1]();
+        }
+      }
+    }
+  }
+</script> --> -->
