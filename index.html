@@ -3,58 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EasyTax — Final Paris Demo</title>
+  <title>EasyTax — Mahmud Tijani</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
   <style>
     body { font-family: 'Inter', system-ui; background: radial-gradient(circle at 20% 80%, #0a2e1a 0%, #000 70%); overflow: hidden; }
     .glass { background: rgba(20,20,20,0.65); backdrop-filter: blur(20px); border: 1px solid rgba(74,222,128,0.2); }
     .glass-card { background: rgba(30,30,30,0.5); border: 1px solid rgba(74,222,128,0.25); transition: all 0.3s; }
-    .highlight { animation: glow 2s infinite alternate; box-shadow: 0 0 30px #4ade80; transform: scale(1.03); }
+    .highlight { animation: glow 1.5s infinite alternate; box-shadow: 0 0 30px #4ade80; transform: scale(1.03); }
     @keyframes glow { from { box-shadow: 0 0 20px #4ade80; } to { box-shadow: 0 0 40px #4ade80; } }
-    .terminal { background: rgba(0,0,0,0.94); border: 1px solid #1a5f3a; }
-    .log { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity:0.8; } 50% { opacity:1; } }
-    .powered { opacity: 0.25; font-size: 10px; transition: opacity 0.4s; }
+    .powered { opacity: 0.25; font-size: 10px; }
     .powered:hover { opacity: 0.7; }
+    html, body { height: 100%; margin: 0; overflow: hidden; }
   </style>
 </head>
 <body class="h-screen flex items-center justify-center relative" x-data="easytax()" x-init="init()">
 
-  <!-- Powered by (very subtle) -->
   <div class="absolute bottom-3 left-1/2 -translate-x-1/2 powered font-mono text-gray-600">
-    powered by EasyTax • mahmudtijani@imt-atlantic.fr
+    powered by Mahmud Tijani • mahmudtijani@imt-atlantic.fr
   </div>
 
-  <div class="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto px-6">
+  <div class="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto px-6 h-full">
 
     <!-- LEFT: iPhone -->
-    <div class="flex flex-col items-center">
+    <div class="flex flex-col items-center justify-center h-full">
       <div class="text-xs font-mono text-gray-500 mb-4">User Experience • iPhone 16 Pro</div>
       <div class="w-96 h-[800px] bg-black rounded-[60px] border-[14px] border-gray-900 shadow-2xl overflow-hidden relative">
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-44 h-9 bg-black rounded-b-3xl z-50"></div>
-        <div class="h-full bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col pt-12 px-6 overflow-hidden" x-ref="phone">
-          <div class="flex-1" x-html="screen"></div>
+        <div class="h-full bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col pt-12 px-6" style="overflow:hidden">
+          <div class="flex-1 overflow-y-auto overscroll-contain" x-html="screen"></div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT: Terminal (now shows 2000+ fake logs before real message) -->
-    <div class="flex flex-col">
+    <!-- RIGHT: Terminal -->
+    <div class="flex flex-col justify-center h-full">
       <div class="text-xs font-mono text-gray-400 mb-4 flex justify-between">
-        <span>EasyTax Intelligence Engine v4</span>
-        <span class="text-green-400 flex items-center gap-2"><div class="w-2 h-2 bg-green-400 rounded-full pulse"></div> LIVE @ IMT Atlantique</span>
+        <span>EasyTax Engine v4</span>
+        <span class="text-green-400">LIVE @ IMT Atlantique, Nantes</span>
       </div>
-      <div class="terminal glass rounded-2xl p-6 flex-1 font-mono text-xs overflow-hidden flex flex-col">
-        <div class="flex gap-2 mb-4"><div class="w-3 h-3 rounded-full bg-red-500/80"></div><div class="w-3 h-3 rounded-full bg-yellow-500/80"></div><div class="w-3 h-3 rounded-full bg-green-500 pulse"></div></div>
-        <div class="flex-1 overflow-y-auto space-y-1" id="logs">
+      <div class="glass rounded-2xl p-6 h-96 flex flex-col">
+        <div class="flex gap-2 mb-4">
+          <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+          <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+          <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-1 text-xs font-mono" id="logs">
           <template x-for="l in logs" :key="l.id">
-            <div class="log"><span class="text-gray-600" x-text="l.time"></span> <span x-html="l.msg"></span></div>
+            <div><span class="text-gray-600" x-text="l.time"></span> <span x-html="l.msg"></span></div>
           </template>
           <div class="text-gray-500 animate-pulse">_</div>
         </div>
@@ -69,112 +67,157 @@
         screen: '',
         logs: [],
 
-        log(color, msg) {
+        log(msg) {
           const t = new Date().toTimeString().slice(0,8);
-          // Fake 15 lines of unreadable logs
-          const fake = [
-            "GET /api/v3/nibss/bvn → 200",
-            "POST /firs/taxpro-max → 201",
-            "AES-256 decrypt payload 0x9f2a...",
-            "Parsing 4,821 transactions...",
-            "ML model: turnover=₦78.4M (99.1% confidence)",
-            "Applying CITA 2025 §23 exemptions...",
-            "Cache hit: TIN 10239481-0001",
-            "Webhook → Interswitch Webpay",
-            "Rate limit: 2 req/s (ok)",
-            "Compliance score → 100%"
-          ];
-          fake.forEach(f => this.logs.push({ id: Date.now()+Math.random(), time: t, msg: `<span class="text-gray-700">${f}</span>` }));
-          // Real readable log
-          this.logs.push({ id: Date.now(), time: t, msg: `<span class="text-${color} font-bold">✓ ${msg}</span>` });
+          this.logs.push({id:Date.now(), time:t, msg: `<span class="text-green-400 font-bold">Checkmark ${msg}</span>`});
           this.$nextTick(() => document.getElementById('logs').scrollTop = 99999);
         },
 
-        next() {
-          this.step++;
-          setTimeout(() => this.show(this.step), 2000);
-        },
+        next() { this.step++; setTimeout(() => this.show(this.step), 2000); },
 
         show(s) {
           const steps = [
-            // 0 — Location + WiFi (IMT Atlantique joke)
-            () => { this.screen = `<div class="text-center pt-20"><h1 class="text-4xl font-black mb-8">EasyTax</h1>
-              <p class="text-sm text-gray-400 mb-6">Location: IMT Atlantique, Nantes</p>
-              <p class="text-xs text-yellow-400 mb-6">Public WiFi Detected: Erodum (French Gov)</p>
-              <button @click="next()" class="bg-green-600 text-white px-8 py-4 rounded-2xl font-bold highlight">Continue on Public WiFi</button></div>`; },
+            // 0 — Welcome
+            () => { this.screen = `<div class="text-center pt-20">
+              <img src="https://i.imgur.com/8oN9mK8.jpg" class="w-24 h-24 rounded-full mx-auto ring-4 ring-green-500 mb-6 object-cover">
+              <h1 class="text-5xl font-black bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">EasyTax</h1>
+              <p class="text-lg text-gray-500 mt-4">Tax Compliance • Nigeria → France</p>
+              <button @click="next()" class="mt-12 bg-green-600 text-white px-12 py-5 rounded-2xl font-black text-xl highlight">Start Demo →</button>
+            </div>`; },
 
-            // 1 — User Profile (African avatar + real name)
-            () => { this.screen = `<div class="pt-12 text-center"><img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-28 h-28 rounded-full mx-auto ring-4 ring-green-500 mb-6">
-              <h2 class="text-2xl font-black">EasyTax</h2><p class="text-sm text-gray-400">mahmudtijani@imt-atlantic.fr</p>
-              <button @click="next()" class="mt-12 bg-yellow-500 text-black font-black text-xl py-5 px-12 rounded-2xl highlight">Continue →</button></div>`; },
+            // 1 — Profile
+            () => { this.screen = `<div class="pt-20 text-center">
+              <img src="https://i.imgur.com/8oN9mK8.jpg" class="w-32 h-32 rounded-full ring-4 ring-green-500 mx-auto mb-6 object-cover">
+              <h2 class="text-3xl font-black">Mahmud Tijani</h2>
+              <p class="text-lg text-gray-400">mahmudtijani@imt-atlantic.fr</p>
+              <button @click="next()" class="mt-12 bg-yellow-500 text-black font-black text-xl py-6 px-16 rounded-2xl highlight">Continue →</button>
+            </div>`; },
 
-            // 2 — Freemium Selection (after login!)
-            () => { this.screen = `<div class="pt-8 text-center"><h2 class="text-3xl font-black mb-6">Choose Your Plan</h2>
-              <div class="space-y-5"><div class="glass-card rounded-2xl p-6"><div class="font-bold text-xl">Personal • FREE</div></div>
-              <div class="glass-card rounded-2xl p-6"><div class="font-bold text-xl text-yellow-400">Artisan • €1.2–€10/mo</div></div>
-              <div class="glass-card rounded-2xl p-6 ring-4 ring-green-500 highlight"><div class="font-bold text-2xl text-green-400">SME Growth • €5–€100/mo ← TODAY</div></div>
-              <div class="glass-card rounded-2xl p-6"><div class="font-bold text-xl text-purple-400">Corporate • €1k–€5k/mo</div></div></div>
-              <button @click="next()" class="mt-10 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Continue with SME Growth</button></div>`; },
+            // 2 — Pricing with SME highlighted
+            () => { this.screen = `<div class="pt-10 text-center">
+              <h2 class="text-2xl font-black mb-8">Choose Plan</h2>
+              <div class="space-y-4 text-lg">
+                <div class="glass-card rounded-2xl p-5">Personal <span class="float-right text-green-500">FREE</span></div>
+                <div class="glass-card rounded-2xl p-5">Artisan <span class="float-right text-yellow-400">€1.2–€10/mo</span></div>
+                <div class="glass-card rounded-2xl p-5 ring-4 ring-green-500 highlight">
+                  <div class="font-bold text-xl text-green-400">SME Growth</div>
+                  <div class="text-sm mt-1">€5–€100/month • Unlimited filings</div>
+                  <div class="text-2xl font-black mt-3">← Demo Today</div>
+                </div>
+                <div class="glass-card rounded-2xl p-5">Corporate <span class="float-right text-purple-400">€1k+</span></div>
+              </div>
+              <button @click="next()" class="mt-10 w-10/12 bg-yellow-500 text-black text-2xl py-6 rounded-2xl highlight">Continue with SME Growth (€49/mo)</button>
+            </div>`; this.log("SME Growth selected (€49/month)"); },
 
-            // 3 — BVN + TIN
-            () => { this.screen = `<div class="pt-20 text-center"><h2 class="text-3xl font-black mb-10">Verify Identity</h2>
+            // 3 — Identity
+            () => { this.screen = `<div class="pt-20 text-center">
+              <h2 class="text-3xl font-black mb-10">Verify Identity</h2>
               <input readonly value="22490188219" class="w-80 p-5 rounded-2xl text-center text-xl font-mono bg-gray-800 text-white mb-6 highlight">
               <input readonly value="10239481-0001" class="w-80 p-5 rounded-2xl text-center text-xl font-mono bg-gray-800 text-white mb-10 highlight">
-              <button @click="next()" class="w-80 bg-green-600 text-white font-black text-xl py-6 rounded-2xl highlight">Verify →</button></div>`; },
+              <button @click="next()" class="w-80 bg-green-600 text-white font-black text-xl py-6 rounded-2xl highlight">Verify →</button>
+            </div>`; this.log("BVN + TIN verified"); },
 
-            // 4 — Company Selection
-            () => { this.screen = `<div class="pt-10"><h2 class="text-3xl font-black text-center mb-8">Your Companies</h2>
-              <div class="space-y-5"><div @click="next()" class="glass-card rounded-2xl p-6 flex items-center gap-5 border-4 border-green-500 highlight cursor-pointer">
-              <img src="https://api.dicebear.com/7.x/shapes/svg?seed=construction" class="w-16 h-16"><div><div class="font-black text-xl">Fathu Construction Ltd</div><div class="text-sm text-gray-400">₦78.4M turnover</div></div></div></div></div>`; },
+            // 4 — Company
+            () => { this.screen = `<div class="pt-12 text-center">
+              <h2 class="text-2xl font-black mb-8">Your Company</h2>
+              <div @click="next()" class="glass-card rounded-2xl p-6 mx-8 border-4 border-green-500 highlight cursor-pointer">
+                <div class="flex items-center gap-5">
+                  <div class="text-4xl">Construction</div>
+                  <div class="text-left">
+                    <div class="font-black text-xl">Fathu Construction Ltd</div>
+                    <div class="text-sm text-gray-400">₦78.4M turnover</div>
+                  </div>
+                </div>
+              </div>
+            </div>`; this.log("Fathu Construction selected"); },
 
-            // 5 — Bank Aggregation
-            () => { this.screen = `<div class="pt-10 text-center"><div class="flex items-center justify-center gap-5 mb-8"><img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-14 h-14 rounded-full ring-4 ring-green-500"><div class="font-black text-xl">Fathu Construction Ltd</div></div>
-              <div class="space-y-5 text-xl font-bold"><div class="bg-gray-900/80 p-6 rounded-2xl">GTBank • ₦42.1M</div><div class="bg-gray-900/80 p-6 rounded-2xl">Zenith • ₦18.7M</div></div>
-              <div class="text-4xl font-black text-green-400 mt-8">₦78.4M total</div>
-              <button @click="next()" class="mt-10 w-11/12 bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Continue →</button></div>`; },
+            // 5 — Bank Total
+            () => { this.screen = `<div class="pt-12 text-center">
+              <h2 class="text-2xl font-black mb-8">Bank Accounts</h2>
+              <div class="space-y-4 text-lg font-bold">
+                <div class="bg-gray-900/80 p-5 rounded-2xl">GTBank • ₦42.1M</div>
+                <div class="bg-gray-900/80 p-5 rounded-2xl">Zenith • ₦18.7M</div>
+                <div class="bg-gray-900/80 p-5 rounded-2xl">FirstBank + UBA • ₦17.6M</div>
+              </div>
+              <div class="text-4xl font-black text-green-400 mt-10 mb-8">₦78.4M total</div>
+              <button @click="next()" class="w-10/12 bg-yellow-500 text-black text-2xl py-6 rounded-2xl highlight">Continue →</button>
+            </div>`; this.log("₦78.4M aggregated"); },
 
             // 6 — Tax Summary
-            () => { this.screen = `<div class="pt-10 px-6 text-center"><h2 class="text-3xl font-black mb-8">Tax Due</h2>
-              <div class="bg-gray-900 rounded-3xl p-8 space-y-6 text-xl"><div>Turnover <span class="float-right">₦78.4M</span></div><div>Expenses <span class="float-right text-red-400">-₦18.2M</span></div>
-              <div class="text-3xl font-black text-green-400 pt-6">₦12,040,000 due</div></div>
-              <button @click="next()" class="mt-8 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Pay Now →</button></div>`; },
+            () => { this.screen = `<div class="pt-12 px-6 text-center">
+              <h2 class="text-2xl font-black mb-8">Tax Calculation</h2>
+              <div class="bg-gray-900 rounded-3xl p-8 space-y-5 text-lg">
+                <div>Turnover <span class="float-right">₦78,400,000</span></div>
+                <div>Expenses <span class="float-right text-red-400">-₦18,200,000</span></div>
+                <div class="border-t border-gray-600 pt-5 font-black text-2xl">
+                  Taxable Income <span class="float-right">₦60,200,000</span>
+                </div>
+                <div class="border-t border-gray-600 pt-6 text-3xl font-black text-green-400">
+                  CIT Due <span class="block mt-2 text-4xl">₦12,040,000</span>
+                </div>
+              </div>
+              <button @click="next()" class="mt-10 w-full bg-yellow-500 text-black text-2xl py-6 rounded-2xl highlight">Pay Now →</button>
+            </div>`; this.log("CIT calculated: ₦12.04M"); },
 
-            // 7 — Payment Method
-            () => { this.screen = `<div class="pt-10 px-6 text-center"><h2 class="text-3xl font-black mb-8">Payment Method</h2>
-              <div class="space-y-5"><div class="glass-card rounded-2xl p-6 border-4 border-green-500 highlight"><div class="font-bold text-xl">Verve Corporate • **** 3184</div></div></div>
-              <button @click="next()" class="mt-8 w-full bg-yellow-500 text-black font-black text-2xl py-6 rounded-2xl highlight">Pay with Verve →</button></div>`; },
+            // 7 — Payment with VAT & Fee
+            () => { this.screen = `<div class="pt-12 px-6 text-center">
+              <h2 class="text-2xl font-black mb-8">Payment Summary</h2>
+              <div class="bg-gray-900 rounded-3xl p-8 space-y-5 text-lg">
+                <div>CIT (30%) <span class="float-right">₦12,040,000</span></div>
+                <div>VAT (7.5%) <span class="float-right text-yellow-400">₦903,000</span></div>
+                <div class="border-t border-gray-600 pt-4 font-bold">
+                  EasyTax Fee <span class="float-right text-green-400">₦299,000</span>
+                </div>
+                <div class="border-t border-green-500 pt-6 text-3xl font-black text-white bg-green-600/20 rounded-2xl py-4">
+                  Total <span class="block text-4xl">₦13,242,000</span>
+                </div>
+              </div>
+              <button @click="next()" class="mt-10 w-full bg-yellow-500 text-black text-2xl py-6 rounded-2xl highlight">Pay ₦13.24M →</button>
+            </div>`; this.log("Payment ready: ₦13.24M incl. VAT + fee"); },
 
-            // 8 — Payment Success
-            () => { this.screen = `<div class="bg-white text-black h-full flex flex-col justify-center items-center"><h1 class="text-5xl font-black mb-10">₦12,040,000</h1>
-              <button @click="next()" class="bg-red-600 text-white font-black text-3xl py-8 px-16 rounded-2xl highlight">Payment Successful</button></div>`; },
+            // 8 — Payment Method
+            () => { this.screen = `<div class="pt-16 text-center">
+              <h2 class="text-2xl font-black mb-10">Select Payment Method</h2>
+              <div class="glass-card rounded-2xl p-6 mx-10 border-4 border-green-500 highlight">
+                <div class="font-bold text-xl">Verve Corporate • **** 3184</div>
+              </div>
+              <button @click="next()" class="mt-12 w-10/12 bg-yellow-500 text-black text-2xl py-6 rounded-2xl highlight">Pay with Verve →</button>
+            </div>`; this.log("Verve selected"); },
 
-            // 9 — TCC Issued + Download (centered!)
-            () => { this.screen = `<div class="pt-20 text-center"><div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto text-8xl mb-8">Check</div>
-              <h1 class="text-4xl font-black mb-4">TCC Issued!</h1><p class="text-green-400 text-2xl mb-10">FIRS-2026-99281</p>
-              <div class="bg-gray-900 rounded-3xl p-8 max-w-sm mx-auto"><div class="flex flex-col items-center"><span class="font-black text-xl mb-4">TCC_2026_Fathu.pdf</span>
-              <button class="bg-green-600 text-black px-12 py-5 rounded-full font-black text-xl highlight">Download TCC</button></div></div></div>`; },
+            // 9 — Payment Success
+            () => { this.screen = `<div class="bg-white text-black h-full flex flex-col justify-center items-center">
+              <h1 class="text-5xl font-black mb-10">₦13,242,000</h1>
+              <div class="text-2xl text-green-600 font-bold mb-12">Payment Successful</div>
+              <button @click="next()" class="bg-green-600 text-white text-2xl py-8 px-20 rounded-2xl highlight">Continue</button>
+            </div>`; this.log("Payment successful"); },
 
-            // 10 — Filing History
-            () => { this.screen = `<div class="pt-10 text-center"><h2 class="text-3xl font-black mb-8">Filing History</h2>
-              <div class="space-y-4 text-lg font-medium"><div class="bg-gray-900 rounded-2xl p-6">Today • CIT • <span class="text-green-400">₦12.04M Paid</span></div></div></div>`;
-              confetti({particleCount: 500, spread: 100, origin: { y: 0.6 }}); }
+            // 10 — TCC
+            () => { this.screen = `<div class="pt-20 text-center">
+              <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto text-8xl mb-8">Checkmark</div>
+              <h1 class="text-4xl font-black mb-4">TCC Issued!</h1>
+              <p class="text-green-400 text-2xl mb-10">FIRS-2026-99281</p>
+              <button class="bg-green-600 text-black px-16 py-5 rounded-full font-black text-xl highlight">Download TCC</button>
+            </div>`; this.log("TCC generated & sent"); },
+
+            // 11 — Final
+            () => { this.screen = `<div class="pt-20 text-center">
+              <h2 class="text-3xl font-black mb-8">Compliance Complete</h2>
+              <p class="text-2xl text-green-400">100% Filed • Zero Stress</p>
+              <div class="text-6xl mt-12">African Flag Nigerian Flag</div>
+            </div>`;
+              confetti({particleCount: 800, spread: 120, origin: { y: 0.6 }});
+              this.log("Demo finished — investor ready");
+            }
           ];
 
           if (s >= 0 && s < steps.length) {
             steps[s]();
-            this.log(s === 9 ? 'green-400' : 'cyan-400', `Step ${s+1}/11 completed`);
           }
         },
 
-        init() {
-          this.show(0);
-        }
+        init() { this.show(0); }
       }
     }
   </script>
 </body>
 </html>
-
-
-
-
